@@ -1,0 +1,263 @@
+package BoletPluspackage
+
+
+// Usamos "data class" para la clase Usuario, lo que nos permite generar de manera fácil métodos como toString, equals y hashCode.
+
+data class Usuario(val username: String, val password: String, val nombre: String)
+
+
+//////////////////////////////////
+// CLASES METODOS DE PAGO
+////////////////////////////////////
+
+abstract class MetodoPago {
+    abstract fun pagar()
+}
+
+class TarjetaCredito : MetodoPago() {
+    override fun pagar() {
+        println("Ingresa el número de tu tarjeta de crédito: ")
+        val numeroTarjeta = readLine()
+        println("Ingresa la fecha de expiración (MM/YY): ")
+        val fechaExpiracion = readLine()
+        println("Ingresa el código de seguridad: ")
+        val codigoSeguridad = readLine()
+
+        println("")
+        println("PROCESANDO PAGO...")
+        println("")
+        println("¡Pago realizado con exito!")
+    }
+}
+
+
+class PagoOXXO : MetodoPago() {
+    override fun pagar() {
+        println("Ingresa el código de barras del ticket de OXXO: ")
+        val codigoBarras = readLine()
+        println("RECUERDA REALIZAR TU PAGO EN LAS PROXIMAS 24 HRS")
+    }
+}
+
+class Evento(val nombre: String, var entradasDisponibles: Int = 10)
+
+class CompraEvento(val eventos: List<Evento>, private val precio: Double = 100.0, private val metodoPago: MetodoPago) {
+    fun comprarBoletos() {
+        var seguirComprando = 1
+        var costoTotal = 0.0
+        while (seguirComprando == 1) {
+            println("Estos son los eventos disponibles: ")
+            eventos.forEachIndexed { index, evento ->
+                println("${index + 1}. ${evento.nombre} - ${evento.entradasDisponibles} entradas disponibles")
+            }
+            println("¿De qué evento quieres comprar boletos? (Ingresa el número del evento): ")
+            val opcionEvento = readLine()?.toIntOrNull()
+            val eventoSeleccionado = eventos.getOrNull(opcionEvento?.minus(1) ?: -1)
+            if (eventoSeleccionado == null) {
+                println("Evento no válido")
+            } else {
+                println("¿Cuántos boletos quieres comprar? ")
+                val cantidad = readLine()?.toIntOrNull() ?: 0
+                if (cantidad <= 0 || cantidad > eventoSeleccionado.entradasDisponibles) {
+                    println("Cantidad no válida")
+                } else {
+                    val costoBoletos = cantidad * precio
+                    costoTotal += costoBoletos
+                    println("Total a pagar: $costoBoletos")
+                    eventoSeleccionado.entradasDisponibles -= cantidad
+                    println("Boletos seleccionados exitosamente")
+                    println("Entradas disponibles: ${eventoSeleccionado.entradasDisponibles}")
+                    println("¿Cuál es tu método de pago preferido? (1. Tarjeta de crédito / 2. Pago en OXXO): ")
+                    val opcion = readLine()?.toIntOrNull()
+                    when (opcion) {
+                        1 -> metodoPago.pagar()
+                        2 -> PagoOXXO().pagar()
+                        else -> println("Opción no válida")
+                    }
+                    println("¿Quieres seguir comprando? (Sí= 1 / No= 0): ")
+                    seguirComprando = readLine()?.toIntOrNull() ?: 0
+                }
+            }
+        }
+    }
+}
+
+
+/////////////////////////////////////////////////
+/////////// CLASES REGISTRO E INICIO DE SESION
+////////////////////////////////////////////////
+class Registro {
+    fun login(): Pair<String, String> {
+        print("Ingresa tu nombre de usuario: ")
+        val username = readLine()
+        print("Ingresa tu contraseña: ")
+        val password = readLine()
+
+        return Pair(username ?: "", password ?: "")
+    }
+
+    fun mostrarPerfil(usuario: Usuario) {
+        println("Nombre: ${usuario.nombre}")
+        println("Nombre de usuario: ${usuario.username}")
+    }
+
+    fun registrarUsuario(): Usuario {
+        print("Ingresa tu nombre completo: ")
+        val nombre = readLine() ?: ""
+        print("Ingresa tu nombre de usuario: ")
+        val username = readLine() ?: ""
+        print("Ingresa tu contraseña: ")
+        val password = readLine() ?: ""
+
+        return Usuario(username, password, nombre)
+    }
+}
+
+class InicioSesion {
+    fun iniciarSesion(usuarios: List<Usuario>): Usuario? {
+        val (username, password) = Registro().login()
+
+        return usuarios.find { it.username == username && it.password == password }
+    }
+}
+
+
+
+/////////////////////////////////////////
+//// FUN MAIN
+/////////////////
+fun main() {
+    val usuarios = mutableListOf<Usuario>()
+    var option: Int? = null
+    println("")
+    println("")
+    println("*****************************")
+    println("* BIENVENIDO A BOLETPLUS :) *")
+    println("*****************************")
+    println("")
+    println("_____________________________")
+    println("_ Si no cuenta con usuario  _")
+    println("_      le recomendamos      _")
+    println("_    Registrarse primero :)  ")
+    println("_____________________________")
+    println("")
+
+
+
+    val registro = Registro()
+    val inicioSesion = InicioSesion()
+    val eventos = listOf(Evento("Concierto"), Evento("Obra de Teatro"))
+    val metodoPago = TarjetaCredito()
+    val compraEvento = CompraEvento(eventos, 100.0, metodoPago)
+
+
+///////////////////MENU PRINCIPAL
+
+    while (option != 3) {
+        println("")
+        println("=== MENU ===")
+        println("1. Iniciar sesión")
+        println("2. Registrarse")
+        println("3. Salir")
+        print("Selecciona una opción: ")
+        option = readLine()?.toIntOrNull()
+        println("")
+
+        when (option) {
+            1 -> {
+                val usuario = inicioSesion.iniciarSesion(usuarios)
+                if (usuario != null) {
+                    println("")
+                    println("¡Bienvenido ${usuario.nombre}!")
+                    println("")
+                    var opcionUsuario: Int? = null
+                    while (opcionUsuario != 3) {
+                        println("=== MENÚ ===")
+                        println("1. Comprar boletos")
+                        println("2. Ver mi perfil")
+                        println("3. Cerrar sesión")
+                        print("Selecciona una opción: ")
+                        opcionUsuario = readLine()?.toIntOrNull()
+                        when (opcionUsuario) {
+                            1 -> {
+                                compraEvento.comprarBoletos()
+                            }
+                            2 -> {
+                                println("")
+                                println("=== VER MI PERFIL ===")
+                                registro.mostrarPerfil(usuario)
+                                println("")
+                            }
+                            3 -> {
+                                println("")
+                                println("¡Hasta pronto ${usuario.nombre}!")
+                                println("")
+                            }
+                            else -> {
+                                println("")
+                                println("Opción inválida, intenta de nuevo.")
+                                println("")
+                            }
+                        }
+                    }
+                } else {
+                    println("")
+                    println("Lo sentimos, no pudimos encontrar sus datos de inicio de sesión.")
+                    println("")
+                }
+            }
+            2 -> {
+                println("")
+                println("=== REGISTRARSE ===")
+                val usuario = registro.registrarUsuario()
+                usuarios.add(usuario)
+                println("")
+                println("")
+                println("¡Bienvenido ${usuario.nombre}!")
+                println("")
+                var opcionUsuario: Int? = null
+                while (opcionUsuario != 3) {
+                    println("=== MENÚ ===")
+                    println("1. Comprar boletos")
+                    println("2. Ver mi perfil")
+                    println("3. Cerrar sesión")
+                    print("Selecciona una opción: ")
+                    opcionUsuario = readLine()?.toIntOrNull()
+                    when (opcionUsuario) {
+                        1 -> {
+                            compraEvento.comprarBoletos()
+                        }
+                        2 -> {
+                            println("")
+                            println("=== VER MI PERFIL ===")
+                            registro.mostrarPerfil(usuario)
+                            println("")
+                        }
+                        3 -> {
+                            println("")
+                            println("¡Hasta pronto ${usuario.nombre}!")
+                            println("")
+                        }
+                        else -> {
+                            println("")
+                            println("Opción inválida, intenta de nuevo.")
+                            println("")
+                        }
+                    }
+                }
+            }
+            3 -> {
+                println("")
+                println("¡Gracias por usar BoletPlus, hasta pronto! :)")
+                println("")
+            }
+            else -> {
+                println("")
+                println("Opción inválida, intenta de nuevo.")
+                println("")
+            }
+        }
+    }
+}
+
+
